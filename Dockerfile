@@ -1,8 +1,8 @@
 FROM python:3.9-alpine3.13
-LABEL authors="tobikasaba"
+LABEL maintainer="tobikasaba"
 
 # Prevents Python from buffering stdout/stderr (directly prints logs to the console)
-ENV PYTHONUNBUFFERED=1
+ENV PYTHONUNBUFFERED 1
 
 # Copy the requirements file into the Docker image at /tmp/requirements.txt
 COPY ./requirements.txt /tmp/requirements.txt
