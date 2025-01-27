@@ -1,0 +1,26 @@
+#version of docker compose syntax to be used
+#version: "3.9"
+
+
+services:
+#name of the service that will run the docker file
+  app:
+  # Specifies that the Docker image should be built in the current directory ('.').
+  # The root directory is the build context.
+    build:
+      context: .
+#      this file is only used for developement
+      args:
+        - DEV=true
+    # Port mappings: maps port 8000 on the local machine to port 8000 inside the Docker container.
+    # This allows access to the application from the host machine.
+    ports:
+      - "8000:8000"
+    # Volume mappings: maps the 'app' directory on the host machine to the '/app' directory inside the Docker container.
+    # This enables live updates to files in the container during development.
+    volumes:
+      - ./app:/app
+    # Command to run the service when the container starts.
+    # Here, it runs the Django development server on all network interfaces.
+    command: >
+      sh -c "python manage.py runserver 0.0.0.0:8000"
