@@ -32,7 +32,7 @@ RUN python -m venv /py && \
     # Install Python dependencies listed in the requirements.txt file.
     /py/bin/pip install -r /tmp/requirements.txt && \
     # Install dev dependencies if the DEV is set to true
-    if [$DEV = "true"]; \
+    if [ $DEV = "true" ]; \
       then /py/bin/pip install -r /tmp/requirements.dev.txt ; \
     fi && \
     # Delete the /tmp directory to free up space.
