@@ -1,0 +1,77 @@
+# 3 dashes at the top signify it's a yml file
+---
+
+name: Checks
+
+#trigger telling github actions to run when code is pushed
+on: [push]
+
+#specify jobs to run
+#steps are executed in order
+#if any of the commands fail the entire job fails
+
+
+# Define a job named "test-lint"
+jobs:
+  test-lint:
+    # Name of the job as it will appear in the GitHub Actions UI
+    name: Test and Lint
+    # Specifies the operating system the job will run on (Ubuntu 20.04 in this case)
+    runs-on: ubuntu-20.04
+
+    # List of steps to be executed in this job
+    steps:
+      # Step 1: Log in to Docker Hub
+      - name: Login to Docker Hub
+        # Use the Docker Login Action to authenticate with Docker Hub
+        uses: docker/login-action@v1
+        # Provide the Docker Hub username and password/token from GitHub Secrets
+        with:
+          # Docker Hub username stored in GitHub Secrets
+          username: ${{ secrets.DOCKERHUB_USER }}
+          # Docker Hub token (or password) stored in GitHub Secrets
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # Step 2: Checkout the code from the repository
+      - name: Checkout
+        # Use the Checkout Action to clone the repository code into the runner
+        uses: actions/checkout@v2
+
+      # Step 3: Run unit tests
+      - name: Test
+        # Execute a command to run unit tests using Docker Compose
+        run: docker compose run --rm sh -c "python3 manage.py test"
+        # Explanation:
+        # - `docker-compose run --rm`: Starts a new container using Docker Compose and removes it after execution
+        # - `sh -c "python3 manage.py test"`: Runs the command to execute unit tests in the container
+
+      # Step 4: Run linting
+      - name: Lint
+        # Execute a command to run linting using Docker Compose
+        run: docker compose run --rm sh -c "flake8"
+        # Explanation:
+        # - `docker-compose run --rm`: Starts a new container using Docker Compose and removes it after execution
+        # - `sh -c "flake8"`: Runs the Flake8 linter to check for code style and syntax issues
+
+#jobs:
+#  test-lint:
+#    name: Test and Lint
+#    runs-on: ubuntu-20.04
+#    steps:
+##      logs into docker hub
+#      - name: Login to Docker Hub
+#        uses: docker/login-action@v1
+#        with:
+##          credentials used to log into Docker
+#          username: ${{ secrets.DOCKERHUB_USER }}
+#          password: ${{ secrets.DOCKERHUB_TOKEN }}
+#
+##      checkout checks our code out on in gtihub. This isnt done by deafulat
+##      used to make sure its available to be able to run luinting on the code
+#      - name: Checkout
+#        uses: actions/checkout@v2
+#      - name: Test
+##        runs unit test on the project
+#        run: docker compose run --rm sh -c "python3 manage.py test"
+#      - name: Lint
+#        run: docker compose run --rm sh -c "flake8"

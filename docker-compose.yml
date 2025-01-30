@@ -17,6 +17,7 @@ services:
     ports:
       - "8000:8000"
     # Volume mappings: maps the 'app' directory on the host machine to the '/app' directory inside the Docker container.
+    #    This also happens vice versa
     # This enables live updates to files in the container during development.
     volumes:
       - ./app:/app
