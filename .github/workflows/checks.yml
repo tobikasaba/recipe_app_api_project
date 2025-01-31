@@ -57,4 +57,4 @@ jobs:
         # Explanation:
         # - `docker-compose run --rm`: Starts a new container using Docker Compose and removes it after execution
         # - `sh -c "flake8"`: Runs the Flake8 linter to check for code style and syntax issues
-        run: docker compose run --rm sh -c "flake8"
+        run: docker compose run --rm app sh -c "flake8"
