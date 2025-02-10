@@ -2,6 +2,7 @@
 Calculator functions
 """
 
+
 def add(x, y):
     """
     Add two numbers
@@ -14,4 +15,4 @@ def add(x, y):
 
 def subtract(x, y):
     """Subtract two numbers"""
-    return  y - x
+    return y - x

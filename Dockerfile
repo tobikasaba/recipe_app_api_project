@@ -29,6 +29,11 @@ ARG DEV=false
 RUN python -m venv /py && \
     # Upgrade pip inside the virtual environment.
     /py/bin/pip install --upgrade pip && \
+    # install PostgreSQL client package. Needed for pyscopg2 to connect to Postgres
+    apk add --update --no-cache postgresql-client && \
+    # sets the virtual dependencies package
+    apk add --update --no-cache --virtual .tmp-build-deps \
+      build-base postgresql-dev musl-dev && \
     # Install Python dependencies listed in the requirements.txt file.
     /py/bin/pip install -r /tmp/requirements.txt && \
     # Install dev dependencies if the DEV is set to true
@@ -37,6 +42,8 @@ RUN python -m venv /py && \
     fi && \
     # Delete the /tmp directory to free up space.
     rm -rf /tmp && \
+    # remove the packages installed earlier
+    apk del .tmp-build-deps && \
     # Add a new user named 'django-user' without a password or a home directory.
     # its best practice not to use the root user in the image, to run application.
     # in case of security compromise, hackers can only use features available to the created user
