@@ -55,7 +55,7 @@ services:
     environment:
       # Set three environment variables required for PostgreSQL:
       # 1. POSTGRES_DB: Defines the name of the initial database created at startup
-      # 2. POSTGRES_USER: Sets the database username
+      # 2. POSTGRES_USER: Sets database username
       # 3. POSTGRES_PASSWORD: Sets the password for the database user
       # These credentials are used for local development only and should not be used in production
       #    i.e. this only runs on the local machine and won't be publicly available
