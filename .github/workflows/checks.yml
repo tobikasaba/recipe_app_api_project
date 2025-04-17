@@ -49,7 +49,7 @@ jobs:
         # Explanation:
         # - `docker-compose run --rm`: Starts a new container using Docker Compose and removes it after execution
         # - `sh -c "python3 manage.py test"`: Runs the command to execute unit tests in the container
-        run: docker compose run --rm app sh -c "python3 manage.py test"
+        run: docker compose run --rm app sh -c "python3 manage.py wait_for_db && manage.py test"
 
       # Step 4: Run linting
       - name: Lint

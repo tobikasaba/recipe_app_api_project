@@ -19,7 +19,8 @@ WORKDIR /app
 # Expose port 8000 for the container to listen on
 EXPOSE 8000
 
-#overridden to true when this file docker file is ran through requirements.dev and remains false elsewhere
+# overridden to true when this file docker file is ran through docker-compose.yml {args: - DEV=true}
+# and remains false when true any other file/method
 ARG DEV=false
 
 

@@ -2,7 +2,7 @@
 Django command to wait for the database to be avaialable
 """
 
-# used to make exEcution sleep
+# used to make execution sleep
 import time
 
 # a possible error that might occur when trying to connect to the database before it is ready
@@ -24,7 +24,7 @@ class Command(BaseCommand):
         db_up = False
         while db_up is False:
             try:
-                # if database isn't ready, it throws exception else sets db_up to true
+                # if the database isn't ready, it throws exception else sets db_up to true
                 self.check(databases=['default'])
                 db_up = True
             except(Psycopg2OpError, OperationalError):

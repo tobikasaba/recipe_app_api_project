@@ -27,9 +27,13 @@ services:
       - ./app:/app
 
     # Command to run the service when the container starts.
-    # Here, it runs the Django development server on all network interfaces.
+    # It first runs the wait_for_db command to check if the database is ready,
+    # It then makes migrations,
+    # Lastly, it runs the Django development server on all network interfaces.
     command: >
-      sh -c "python manage.py runserver 0.0.0.0:8000"
+      sh -c "python3 manage.py wait_for_db &&
+             python3 manage.py migrate && 
+             python3 manage.py runserver 0.0.0.0:8000"
     
     # Define environment variables required to connect to the database
     environment:
