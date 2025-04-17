@@ -17,7 +17,7 @@ jobs:
     # Name of the job as it will appear in the GitHub Actions UI
     name: Test and Lint
     # Specifies the operating system the job will run on (Ubuntu 20.04 in this case)
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     # List of steps to be executed in this job
     steps:
@@ -49,7 +49,7 @@ jobs:
         # Explanation:
         # - `docker-compose run --rm`: Starts a new container using Docker Compose and removes it after execution
         # - `sh -c "python3 manage.py test"`: Runs the command to execute unit tests in the container
-        run: docker compose run --rm app sh -c "python manage.py wait_for_db && manage.py test"
+        run: docker compose run --rm app sh -c "python3 manage.py wait_for_db && python3 manage.py test"
 
       # Step 4: Run linting
       - name: Lint
