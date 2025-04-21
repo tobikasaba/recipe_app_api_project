@@ -43,8 +43,6 @@ class UserManager(BaseUserManager):
         return user
 
 
-
-
 # AbstractBaseUser contains the functionality for the auth system, but no fields
 #  PermissionsMixin contains the functionality for Django permissions & fields
 class User(AbstractBaseUser, PermissionsMixin):
