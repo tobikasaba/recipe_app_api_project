@@ -24,13 +24,25 @@ class UserManager(BaseUserManager):
         user = self.model(email="tobi@example.com", first_name="Tobi", is_staff=True)
         """
         normalize_email = self.normalize_email(email)
-        user = self.model(email =normalize_email, **extra_fields)
+        user = self.model(email=normalize_email, **extra_fields)
+        if not email:
+            raise ValueError("User must have an email address")
         # This hashes the password securely using Django's built-in system (encrypting the password)
         user.set_password(password)
         # Saves the user to the database. This tells Django which database to use if you have multiple databases
         user.save(using=self._db)
 
         return user
+
+    def create_superuser(self, email, password):
+        """Create and return a new superuser"""
+        user = self.create_user(email, password)
+        user.is_staff = True
+        user.is_superuser = True
+        user.save(using=self._db)
+        return user
+
+
 
 
 # AbstractBaseUser contains the functionality for the auth system, but no fields
