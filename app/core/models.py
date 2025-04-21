@@ -23,7 +23,8 @@ class UserManager(BaseUserManager):
         hence user = self.model(email=email, **extra_fields) becomes,
         user = self.model(email="tobi@example.com", first_name="Tobi", is_staff=True)
         """
-        user = self.model(email=email, **extra_fields)
+        normalize_email = self.normalize_email(email)
+        user = self.model(email =normalize_email, **extra_fields)
         # This hashes the password securely using Django's built-in system (encrypting the password)
         user.set_password(password)
         # Saves the user to the database. This tells Django which database to use if you have multiple databases
