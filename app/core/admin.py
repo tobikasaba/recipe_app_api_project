@@ -26,7 +26,7 @@ class UserAdmin(BaseUserAdmin):
 
         # '_()' is a standard Django utility for marking strings for translation,
         # allowing the label "User Details" to be translated into other languages if needed.
-        (_('User Details'),{'fields': ('email', 'password')}),
+        (_('User Details'), {'fields': ('email', 'password')}),
 
         # Second section: 'Permissions' section
         (
@@ -44,20 +44,24 @@ class UserAdmin(BaseUserAdmin):
     readonly_fields = ['last_login']  # 'last_login' is read-only, as it's automatically set by Django
 
     # Customise the form layout for adding a new user in the Django admin
+    # Django knows that add_fieldsets is specifically for adding a user,
+    # because it's part of the UserAdmin class configuration.
+    # The UserAdmin class is a special Django admin class
+    # that customises the user management interface in the Django admin panel.
     add_fieldsets = (
         (
             None, {  # No section title for this section
-            'classes': ('wide',),  # Apply 'wide' class for wider form fields
-            'fields': (  # Fields to be displayed when adding a new user
-                'email',  # Email field
-                'password1',  # First password field
-                'password2',  # Second password field (for confirmation)
-                'name',  # User's full name
-                'is_active',  # Whether the user is active
-                'is_staff',  # Whether the user has staff privileges
-                'is_superuser',  # Whether the user has superuser privileges
-            ),
-        }
+                'classes': ('wide',),  # Apply 'wide' class for wider form fields
+                'fields': (  # Fields to be displayed when adding a new user
+                    'email',  # Email field
+                    'password1',  # First password field
+                    'password2',  # Second password field (for confirmation)
+                    'name',  # User's full name
+                    'is_active',  # Whether the user is active
+                    'is_staff',  # Whether the user has staff privileges
+                    'is_superuser',  # Whether the user has superuser privileges
+                ),
+            }
         ),
     )
 
@@ -69,5 +73,3 @@ This tells Django to use UserAdmin to manage the display of User objects in the 
 It ensures that when you view the user model in the admin, it follows the configuration defined in UserAdmin
 """
 admin.site.register(models.User, UserAdmin)
-
-# Register your models here.
