@@ -44,7 +44,7 @@ class UserManager(BaseUserManager):
 
 
 # AbstractBaseUser contains the functionality for the auth system, but no fields
-#  PermissionsMixin contains the functionality for Django permissions & fields
+#  PermissionsMixin contains the functionality for Django permissions and fields
 class User(AbstractBaseUser, PermissionsMixin):
     """User in the system"""
     email = models.EmailField(max_length=255, unique=True)
@@ -54,5 +54,5 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     # assigns a user manager
     objects = UserManager()
-    # replaces the USERNAME default field in django with the email field. No longer requires a username
+    # Replaces the USERNAME default field in django with the email field. No longer requires a username
     USERNAME_FIELD = 'email'
