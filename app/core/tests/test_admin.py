@@ -1,4 +1,10 @@
-"""Tests for django admin modifications"""
+"""
+Tests for django admin modifications
+
+The test client is a Python class that acts as a dummy web browser,
+allowing you to test your views and interact with your Django-powered application programmatically.
+It allows you to simulate GET and POST requests on a URL and observe the response
+"""
 from django.test import TestCase, Client
 from django.contrib.auth import get_user_model
 from django.urls import reverse
