@@ -2,10 +2,12 @@
 Tests for models
 """
 
+from decimal import Decimal
 from django.test import TestCase
 
 # used get the default user model for the project
 from django.contrib.auth import get_user_model
+from core import models
 
 
 class ModelTests(TestCase):
@@ -59,3 +61,25 @@ class ModelTests(TestCase):
         # is_superuser is inbuilt in django's permission system'
         self.assertTrue(user.is_superuser)
         self.assertTrue(user.is_staff)
+
+    def test_create_recipe(self):
+        """Test creating a recipe is successful"""
+        # creates a new user which creates the recipe
+        user = get_user_model().objects.create_user(
+            'test@example.com',
+            'testpass123'
+        )
+
+        # creates a new recipe using the Recipe model
+        recipe = models.Recipe.objects.create(
+            user=user,
+            title='Sample recipe name',
+            time_minutes=5,
+            price=Decimal('5.50'),
+            description='Sample recipe description'
+        )
+
+        # Tests the string representation (__str__) of the recipe.
+        # Assumes __str__ in the Recipe model returns the recipe's title.
+        # If str(recipe) is not equal to recipe.title, this test will fail.
+        self.assertEqual(str(recipe), recipe.title)

@@ -32,16 +32,19 @@ class UserAdmin(BaseUserAdmin):
         (
             _('Permissions'),  # Section title, translatable
             {
-                'fields': ('is_active', 'is_staff', 'is_superuser')  # Fields related to user permissions
+                # Fields related to user permissions
+                'fields': ('is_active', 'is_staff', 'is_superuser')
             }
         ),
 
         # Third section: 'Important dates' section
-        (_('Important dates'), {'fields': ('last_login',)})  # Shows the 'last_login' field
+        # Shows the 'last_login' field
+        (_('Important dates'), {'fields': ('last_login',)})
     )
 
     # Define which fields should be read-only in the admin interface
-    readonly_fields = ['last_login']  # 'last_login' is read-only, as it's automatically set by Django
+    # 'last_login' is read-only, as it's automatically set by Django
+    readonly_fields = ['last_login']
 
     # Customise the form layout for adding a new user in the Django admin
     # Django knows that add_fieldsets is specifically for adding a user,
@@ -51,7 +54,8 @@ class UserAdmin(BaseUserAdmin):
     add_fieldsets = (
         (
             None, {  # No section title for this section
-                'classes': ('wide',),  # Apply 'wide' class for wider form fields
+                # Apply 'wide' class for wider form fields
+                'classes': ('wide',),
                 'fields': (  # Fields to be displayed when adding a new user
                     'email',  # Email field
                     'password1',  # First password field
@@ -73,3 +77,6 @@ This tells Django to use UserAdmin to manage the display of User objects in the 
 It ensures that when you view the user model in the admin, it follows the configuration defined in UserAdmin
 """
 admin.site.register(models.User, UserAdmin)
+
+
+admin.site.register(models.Recipe)
