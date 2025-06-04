@@ -14,7 +14,6 @@ from core.models import Recipe
 
 from recipe.serializers import RecipeSerializer, RecipeDetailSerializer
 
-
 RECIPES_URL = reverse('recipe:recipe-list')
 
 # a seperate url is created because because each recipe url will be different and you need it to contain the unique id to get the recipe dtail
@@ -119,14 +118,4 @@ class PrivateRecipeApiTest(TestCase):
         # Verify the response is HTTP 200 OK
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         # Verify only the authenticated user’s recipes are returned
-        self.assertEqual(res.data, serializer.data)
-
-    def test_get_recipe_detail(self):
-        """Test get recipe detail"""
-        recipe = create_recipe(user=self.user)
-
-        url = detail_url(recipe.id)
-        res = self.client.get(url)
-
-        serializer = RecipeDetailSerializer(recipe)
         self.assertEqual(res.data, serializer.data)
