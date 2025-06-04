@@ -15,6 +15,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         fields = ['id', 'title', 'time_minutes', 'price', 'link']
         read_only_fields = ['id']
 
+
 # Extends RecipeSerializer to add more detailed fields (used in recipe detail views)
 # Avoids code duplication and leverages existing logic in RecipeSerializer
 class RecipeDetailSerializer(RecipeSerializer):
@@ -23,4 +24,3 @@ class RecipeDetailSerializer(RecipeSerializer):
     # Inherit Meta from RecipeSerializer and add the 'description' field
     class Meta(RecipeSerializer.Meta):
         fields = RecipeSerializer.Meta.fields + ['description']
-
