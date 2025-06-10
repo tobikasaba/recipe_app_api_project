@@ -24,6 +24,11 @@ def detail_url(recipe_id):
     return reverse('recipe:recipe-detail', args=[recipe_id])
 
 
+def create_user(**params):
+    """Create and return a new user"""
+    return get_user_model().objects.create_user(**params)
+
+
 def create_recipe(user, **params):
     """Create and return a sample recipe"""
 
@@ -70,9 +75,8 @@ class PrivateRecipeApiTest(TestCase):
         # Instantiate an APIClient
         self.client = APIClient()
         # Create and save a user
-        self.user = get_user_model().objects.create_user(
-            'user@example.com', 'testpass123'
-        )
+        self.user = create_user(
+            email='user@example.com', password='testpass123')
         # Force authentication for all requests using this client
         self.client.force_authenticate(self.user)
 
@@ -99,9 +103,8 @@ class PrivateRecipeApiTest(TestCase):
     def test_recipe_list_limited_to_user(self):
         """Test list of recipes is limited to authenticated user"""
         # Create a recipe for another user
-        other_user = get_user_model().objects.create_user(
-            'other@example.com', 'password123'
-        )
+        other_user = create_user(
+            email='other@example.com', password='test123')
         create_recipe(user=other_user)
 
         # Create a recipe for the authenticated user
