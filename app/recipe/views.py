@@ -36,3 +36,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
         if self.action == 'list':
             return serializers.RecipeSerializer
         return self.serializer_class
+
+    def perform_create(self, serializer):
+        """Create a new recipe"""
+        # Save the new recipe, associating it with the currently authenticated user
+        serializer.save(user=self.request.user)
