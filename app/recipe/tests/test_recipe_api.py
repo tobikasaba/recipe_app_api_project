@@ -76,7 +76,7 @@ class PrivateRecipeApiTest(TestCase):
         self.client = APIClient()
         # Create and save a user
         self.user = create_user(
-            email='user@example.com', password='testpass123')
+            email='user@example.com', password='test123')
         # Force authentication for all requests using this client
         self.client.force_authenticate(self.user)
 
@@ -158,3 +158,116 @@ class PrivateRecipeApiTest(TestCase):
 
         # Confirm the recipe was created for the logged-in user
         self.assertEqual(recipe.user, self.user)
+
+    def test_partial_update(self):
+        """Test partial update of a recipe"""
+        # Define a known link so we can check it doesn’t change
+        original_link = 'https://example.com/recipe.pdf'
+        # Create a recipe for the authenticated user with a specific title and link
+        recipe = create_recipe(
+            user=self.user,
+            title='Sample recipe title',
+            link=original_link
+        )
+
+        # Prepare partial update data (only the title)
+        payload = {'title': 'New recipe title'}
+        # Build the URL for this recipe’s detail endpoint
+        url = detail_url(recipe.id)
+        # Send a PATCH request to update just the title field
+        res = self.client.patch(url, payload)
+
+        # Expect HTTP 200 OK for a successful partial update
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        # Reload the recipe from the database to see the changes
+        recipe.refresh_from_db()
+        # Check that the title was updated correctly
+        self.assertEqual(recipe.title, payload['title'])
+        # Ensure the link was left unchanged by the partial update
+        self.assertEqual(recipe.link, original_link)
+        # Confirm the recipe still belongs to the same authenticated user
+        self.assertEqual(recipe.user, self.user)
+
+    def test_full_update(self):
+        """Test full update of recipe"""
+        # Create a recipe with an initial title, link and description
+        recipe = create_recipe(
+            user=self.user,
+            title='Sample recipe title',
+            link='https://example.com',
+            description='Sample recipe description'
+        )
+
+        # Full payload to replace every field of the recipe
+        payload = {
+            'title': 'New recipe title',
+            'link': 'https://example.com/new-recipe.pdf',
+            'description': 'New recipe description',
+            'time_minutes': 10,
+            'price': Decimal('2.50')
+        }
+
+        # Construct the detail URL and send a PUT request with the full payload
+        url = detail_url(recipe.id)
+        res = self.client.put(url, payload)
+
+        # Expect HTTP 200 OK for a successful full update
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        # Refresh from the database to retrieve updated values
+        recipe.refresh_from_db()
+        # Verify each field in the payload matches the recipe’s attributes
+        for (k, v) in payload.items():
+            self.assertEqual(getattr(recipe, k), v)
+        # Ensure ownership remains with the authenticated user
+        self.assertEqual(recipe.user, self.user)
+
+    def test_update_user_returns_error(self):
+        """Test changing the recipe user results in an error."""
+        # Create a second user in the test database
+        new_user = create_user(email='user2@example.com', password='test123')
+        # Create a recipe owned by the original authenticated user
+        recipe = create_recipe(user=self.user)
+
+        # Attempt to change ownership by sending the new user’s ID
+        payload = {'user': new_user.id}
+        # Build the detail URL for this recipe
+        url = detail_url(recipe.id)
+        # Send a PATCH request; ownership change should be ignored or rejected
+        self.client.patch(url, payload)
+
+        # Refresh the recipe from the database to pick up any changes
+        recipe.refresh_from_db()
+        # The owner must remain the original user
+        self.assertEqual(recipe.user, self.user)
+
+    def test_delete_recipe(self):
+        """Test deleting a recipe successful."""
+        # Create a recipe owned by the authenticated user
+        recipe = create_recipe(user=self.user)
+
+        # Build the detail URL for this recipe
+        url = detail_url(recipe.id)
+        # Send a DELETE request to remove the recipe
+        res = self.client.delete(url)
+
+        # Expect HTTP 204 No Content for a successful deletion
+        self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+        # Verify the recipe no longer exists in the database
+        self.assertFalse(Recipe.objects.filter(id=recipe.id).exists())
+
+    def test_recipe_other_users_recipe_error(self):
+        """Test trying to delete another users recipe gives error."""
+        # Create a second user
+        new_user = create_user(email='user2@example.com', password='test123')
+        # Create a recipe owned by that second user
+        recipe = create_recipe(user=new_user)
+
+        # Build the detail URL for that recipe
+        url = detail_url(recipe.id)
+        # The first (authenticated) user tries to delete it
+        res = self.client.delete(url)
+
+        # Expect HTTP 404 Not Found, as they shouldn’t have access
+        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+        # Ensure the recipe still exists in the database
+        self.assertTrue(Recipe.objects.filter(id=recipe.id).exists())
