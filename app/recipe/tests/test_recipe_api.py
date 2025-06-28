@@ -80,7 +80,7 @@ class PrivateRecipeApiTest(TestCase):
         # Force authentication for all requests using this client
         self.client.force_authenticate(self.user)
 
-    def test_retrive_recipes(self):
+    def test_retrieve_recipes(self):
         """Test retrieving a list of recipes"""
         # Create two recipes for this authenticated user
         create_recipe(user=self.user)
