@@ -78,5 +78,5 @@ It ensures that when you view the user model in the admin, it follows the config
 """
 admin.site.register(models.User, UserAdmin)
 
-
 admin.site.register(models.Recipe)
+admin.site.register(models.Tag)

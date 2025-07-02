@@ -10,6 +10,11 @@ from django.contrib.auth import get_user_model
 from core import models
 
 
+def create_user(email='user@example.com', password='testpass123'):
+    """Create and return a new user"""
+    return get_user_model().objects.create_user(email, password)
+
+
 class ModelTests(TestCase):
     """Test models functions"""
 
@@ -83,3 +88,16 @@ class ModelTests(TestCase):
         # Assumes __str__ in the Recipe model returns the recipe's title.
         # If str(recipe) is not equal to recipe.title, this test will fail.
         self.assertEqual(str(recipe), recipe.title)
+
+    def test_create_tag(self):
+        """Test creating a tag is successful"""
+        user = create_user()
+
+        # Create and save a new Tag, linking it to our test user
+        tag = models.Tag.objects.create(
+            user=user,  # Assign the tag to the user we just created
+            name='Tag1'  # Give the tag the name "Tag1"
+        )
+
+        # Verify that the tag’s __str__ output matches its name
+        self.assertEqual(str(tag), tag.name)

@@ -2,10 +2,11 @@
 Database models
 """
 
-from django.conf import settings
-from django.db import models
 from django.contrib.auth.models import (
     AbstractBaseUser, BaseUserManager, PermissionsMixin)
+from django.conf import settings
+from django.db import models
+
 
 # Create your models here.
 
@@ -72,6 +73,23 @@ class Recipe(models.Model):
     time_minutes = models.IntegerField()
     price = models.DecimalField(max_digits=5, decimal_places=2)
     link = models.CharField(max_length=255, blank=True)
+    tags = models.ManyToManyField('Tag')  # Tags for filtering; many-to-many relationship with Tag model
 
     def __str__(self):
         return self.title
+
+
+class Tag(models.Model):
+    """Tag for filtering recipes"""
+
+    name = models.CharField(max_length=255)
+
+    # Links this tag to a user; deleting the user deletes their tags
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,  # Reference the active user model
+        on_delete=models.CASCADE,  # Cascade delete to clean up tags
+    )
+
+    def __str__(self):
+        # Return the tag’s name when the object is converted to a string
+        return self.name
