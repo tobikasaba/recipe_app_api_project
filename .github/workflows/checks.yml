@@ -4,7 +4,7 @@
 name: Checks
 
 #trigger telling GitHub actions to run when code is pushed
-on: [push]
+on: [ push ]
 
 #specify jobs to run
 #steps are executed in order
@@ -26,8 +26,8 @@ jobs:
       - name: Login to Docker Hub
         # Use the Docker Login Action to authenticate with Docker Hub
         # An action is a docker container and configuration set up to perform a certain task
-        # using the login action in docker. version 1 {@v1}
-        uses: docker/login-action@v1
+        # using the login action in docker. version 1 {@v1}.... later changed to version 2 from 1
+        uses: docker/login-action@v2
         # Provide the Docker Hub username and password/token from GitHub Secrets
         # These are passed into Docker Login action and will login to docker with the given credentials
         with:
@@ -41,7 +41,8 @@ jobs:
         # Use the Checkout Action to clone the repository code into the runner
         # The actions/checkout action clones the GitHub repo to $GITHUB_WORKSPACE to achieve various jobs,
         # such jobs include building, testing, and deploying the code. Without checkout, these can't be done
-        uses: actions/checkout@v2
+        # later changed to versuib 3 from 2
+        uses: actions/checkout@v3
 
       # Step 3: Run unit tests
       - name: Test
