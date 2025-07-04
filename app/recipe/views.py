@@ -50,7 +50,7 @@ class TagViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     serializer_class = serializers.TagSerializer
 
     # Base queryset (will be filtered to logged-in user's tags)
-    queryset = Recipe.objects.all()
+    queryset = Tag.objects.all()
 
     # Use token-based authentication i.e. Require token-based authentication for access
     authentication_classes = [TokenAuthentication]
