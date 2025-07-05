@@ -4,7 +4,7 @@ URL mappings for the recipe app
 
 from django.urls import path, include
 
-# Default router is used with the API view to automatically create routes for options available for the view
+# DefaultRouter is used with the API view to automatically create routes for options available for the view
 from rest_framework.routers import DefaultRouter
 from recipe import views
 

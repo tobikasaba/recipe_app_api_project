@@ -16,6 +16,16 @@ from recipe.serializers import TagSerializer
 TAGS_URL = reverse("recipe:tag-list")
 
 
+def detail_url(tag_id):
+    """Create and return a tag detail URL"""
+    # Look up the URL for the 'recipe:tag-detail' route,
+    # inserting the tag’s ID into the URL pattern
+    return reverse(
+        "recipe:tag-detail",  # The named URL pattern defined in the router
+        args=[tag_id],  # Positional arguments to fill in the URL’s parameters
+    )
+
+
 def create_user(email="user@example.com", password="testpass123"):
     """Create and return user"""
     return get_user_model().objects.create_user(email, password)
@@ -86,3 +96,46 @@ class PrivateTagsApiTests(TestCase):
         #  Verify the returned tag’s ID and name matches the expected results
         self.assertEqual(res.data[0]["name"], tag.name)
         self.assertEqual(res.data[0]["id"], tag.id)
+
+    def test_update_tag(self):
+        """Test updating a tag"""
+        # Create a tag for the authenticated user with an initial name
+        tag = Tag.objects.create(user=self.user, name="After dinner")
+
+        # Define the new data we want to apply
+        payload = {"name": "Desert"}
+
+        # Build the URL for this tag’s detail endpoint
+        url = detail_url(tag.id)
+
+        # Send a PATCH request to update the tag’s name
+        res = self.client.patch(url, payload)
+
+        # Expect a 200 OK response indicating success
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+        # Refresh the tag instance from the database to pick up changes
+        tag.refresh_from_db()
+
+        # Check that the tag’s name was updated correctly
+        self.assertEqual(tag.name, payload["name"])
+
+    def test_delete_tag(self):
+        """Test deleting a tag"""
+        # Create a tag for the authenticated user
+        tag = Tag.objects.create(user=self.user, name="After dinner")
+
+        # Build the URL for this tag’s detail endpoint
+        url = detail_url(tag.id)
+
+        # Send a DELETE request to remove the tag
+        res = self.client.delete(url)
+
+        # Expect a 204 No Content response signalling successful deletion
+        self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+
+        # Query the database for the tag by its ID
+        tags = Tag.objects.filter(id=tag.id)
+
+        # Confirm that the tag no longer exists
+        self.assertFalse(tags.exists())
