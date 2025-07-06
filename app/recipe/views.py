@@ -1,5 +1,16 @@
 """
 Views for the recipe APIs
+
+RecipeViewSet extends viewsets.ModelViewSet which provides a set of default actions:
+list, create, retrieve, update, partial_update, and destroy.
+
+TagViewSet extends viewsets.GenericViewSet, which by itself does not provide any default actions.
+
+Instead, it gains its behaviour (list, update, destroy) through explicitly added mixins:
+ListModelMixin, UpdateModelMixin, and DestroyModelMixin.
+
+GenericViewSet is used when you want fine-grained control over which actions are available,
+allowing you to include only specific operations by combining it with the appropriate mixins.
 """
 
 from rest_framework import viewsets, mixins
