@@ -45,12 +45,8 @@ class RecipeSerializer(serializers.ModelSerializer):
         # Clients cannot set the ID
         read_only_fields = ["id"]
 
-    def create(self, validated_data):
-        """Create a recipe"""
-        # Extract any nested tags so they don’t get passed to Recipe.objects.create()
-        tags = validated_data.pop("tags", [])
-        # Create a recipe with the rest of the validated data
-        recipe = Recipe.objects.create(**validated_data)
+    def get_or_create_tags(self, tags, recipe):
+        """Handle getting or creating tags as needed"""
         # Get the authenticated user from context
         auth_user = self.context["request"].user
         for tag in tags:
@@ -61,7 +57,40 @@ class RecipeSerializer(serializers.ModelSerializer):
             # Link each tag to the new recipe
             recipe.tags.add(tag_obj)
 
+    def create(self, validated_data):
+        """Create a recipe"""
+        # Extract 'tags' from the validated data so it doesn't get passed to Recipe.objects.create()
+        tags = validated_data.pop("tags", [])
+
+        # Create a new Recipe instance with the remaining validated data
+        recipe = Recipe.objects.create(**validated_data)
+
+        # Handle the creation or association of tags
+        self.get_or_create_tags(tags, recipe)
+
+        # Return the created recipe instance
         return recipe
+
+    def update(self, recipe_instance, validated_data):
+        """Update recipe"""
+
+        # Extract and remove the 'tags' field from the validated data if present
+        tags = validated_data.pop("tags", None)
+
+        # If tags are included in the request, clear old tags and assign new ones
+        if tags is not None:
+            recipe_instance.tags.clear()  # Remove all current tags from the recipe
+            self.get_or_create_tags(tags, recipe_instance)  # Add new or existing tags
+
+        # Set the remaining fields (e.g., title, time_minutes) on the instance
+        for attr, value in validated_data.items():
+            setattr(recipe_instance, attr, value)
+
+        # Save the updated recipe object to the database
+        recipe_instance.save()
+
+        # Return the updated instance
+        return recipe_instance
 
 
 # Extends RecipeSerializer to include the description field

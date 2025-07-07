@@ -337,3 +337,79 @@ class PrivateRecipeApiTest(TestCase):
         for tag in payload["tags"]:
             exists = recipe.tags.filter(name=tag["name"], user=self.user).exists()
             self.assertTrue(exists)
+
+    def test_create_tag_on_update(self):
+        """Test creating tag when updating a recipe."""
+
+        # Create a sample recipe for the authenticated user
+        recipe = create_recipe(user=self.user)
+
+        # Define a payload with a new tag that doesn't exist yet
+        payload = {"tags": [{"name": "Lunch"}]}
+
+        # Get the URL for updating the specific recipe
+        url = detail_url(recipe.id)
+
+        # Send a PATCH request to update the recipe's tags
+        res = self.client.patch(url, payload, format="json")
+
+        # Confirm the response was successful
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+        # Verify that the new tag was created in the database
+        new_tag = Tag.objects.get(user=self.user, name="Lunch")
+
+        # Confirm the new tag is now attached to the recipe
+        self.assertIn(new_tag, recipe.tags.all())
+
+    def test_update_recipe_assigned_tag(self):
+        """Test assigning an existing tag when updating a recipe."""
+
+        # Create a tag and assign it to a recipe
+        tag_breakfast = Tag.objects.create(user=self.user, name="Breakfast")
+        recipe = create_recipe(user=self.user)
+        recipe.tags.add(tag_breakfast)
+
+        # Create another tag to assign during the update
+        tag_lunch = Tag.objects.create(user=self.user, name="Lunch")
+
+        #  Define a payload with a new tag that doesn't exist yet
+        payload = {"tags": [{"name": "Lunch"}]}
+
+        # Build the detail URL for the recipe
+        url = detail_url(recipe.id)
+
+        # Send PATCH request to update the recipe's tags
+        res = self.client.patch(url, payload, format="json")
+
+        # Check that the update was successful
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+        # Check that "Lunch" is now assigned
+        self.assertIn(tag_lunch, recipe.tags.all())
+
+        # Check that "Breakfast" was removed
+        self.assertNotIn(tag_breakfast, recipe.tags.all())
+
+    def test_clear_recipe_tags(self):
+        """Test clearing a recipe's tags."""
+
+        # Create a tag and assign it to a new recipe
+        tag = Tag.objects.create(user=self.user, name="Dessert")
+        recipe = create_recipe(user=self.user)
+        recipe.tags.add(tag)
+
+        # Payload with empty tag list (means clear all tags)
+        payload = {"tags": []}
+
+        # Build the detail URL for the recipe
+        url = detail_url(recipe.id)
+
+        # Send a PATCH request with the empty tag list
+        res = self.client.patch(url, payload, format="json")
+
+        # Confirm request was successful
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+        # Confirm the recipe now has zero tags
+        self.assertEqual(recipe.tags.count(), 0)
