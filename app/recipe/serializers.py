@@ -4,7 +4,22 @@ Serializers for recipe APIs
 
 from rest_framework import serializers
 
-from core.models import Recipe, Tag
+from core.models import Recipe, Tag, Ingredient
+
+
+class IngredientSerializer(serializers.ModelSerializer):
+    """Serializer for ingredients"""
+
+    # Configures the serializer’s behavior
+    class Meta:
+        # Specify the Django model to serialize
+        model = Ingredient
+
+        # Only include the id and name fields in the API
+        fields = ["id", "name"]
+
+        # Prevent clients from providing or modifying the id
+        read_only_fields = ["id"]
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -47,14 +62,17 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     def get_or_create_tags(self, tags, recipe):
         """Handle getting or creating tags as needed"""
-        # Get the authenticated user from context
+        # Get the authenticated user from the request context
         auth_user = self.context["request"].user
+
+        # Iterate over each tag dict (e.g. {"name": "Thai"})
         for tag in tags:
+            # Fetch or create a Tag for this user and tag data
             tag_obj, created = Tag.objects.get_or_create(
-                user=auth_user,  # Ensure the recipe is linked to the current user
-                **tag,  # Unpacks the tag’s own fields e.g. name="Thai"
+                user=auth_user,  # Ensure the tag is linked to the current user
+                **tag  # Unpacks the tag’s own fields, e.g. name="Thai"
             )
-            # Link each tag to the new recipe
+            # Link each tag object to the provided recipe
             recipe.tags.add(tag_obj)
 
     def create(self, validated_data):

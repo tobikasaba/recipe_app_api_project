@@ -81,7 +81,7 @@ class Recipe(models.Model):
     tags = models.ManyToManyField(
         "Tag"
     )  # Tags for filtering; many-to-many relationship with Tag model
-    ingreidents = models.ManyToManyField("Ingredient")
+    ingredients = models.ManyToManyField("Ingredient")
 
     def __str__(self):
         return self.title
@@ -106,11 +106,13 @@ class Tag(models.Model):
 class Ingredient(models.Model):
     """Ingredient for filtering recipes"""
 
+    # Links this tag to a user; deleting the user deletes their tags
     name = models.CharField(max_length=255)
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
+        settings.AUTH_USER_MODEL,  # Reference the active user model
+        on_delete=models.CASCADE,  # Cascade delete to clean up tags
     )
 
     def __str__(self):
+        # Return the ingredient's name when the object is converted to a string
         return self.name

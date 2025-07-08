@@ -17,24 +17,26 @@ from rest_framework import viewsets, mixins
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 
-from core.models import Recipe, Tag
+from core.models import Recipe, Tag, Ingredient
 from recipe import serializers
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
     """View for managing recipe APIs"""
 
+    # Use the RecipeDetailSerializer to (de)serialize data
     # Use this serializer to convert Recipe objects <-> JSON (to JSON)
+    # i.e. Use RecipeDetailSerializer for serialising Recipe instances
     # serializer_class = serializers.RecipeSerializer
     serializer_class = serializers.RecipeDetailSerializer
 
-    # Base queryset (will be filtered to logged-in user's recipes)
+    # Base queryset of all Recipe instances (Contains all instances, will be scoped per-user)
     queryset = Recipe.objects.all()
 
-    # Use token-based authentication i.e Require token-based authentication for access
+    # Require token-based authentication
     authentication_classes = [TokenAuthentication]
 
-    # Only allow access if the user is authenticated
+    # Allow access only to authenticated users
     permission_classes = [IsAuthenticated]
 
     # Overrides the default get_queryset() method.
@@ -62,19 +64,43 @@ class TagViewSet(
 ):
     """Manage tags in the database"""
 
+    # Use the TagSerializer to (de)serialize data
     # Use this serializer to convert Tag objects <-> JSON (to JSON) i.e. Use TagSerializer for serialising Tag instances
     serializer_class = serializers.TagSerializer
 
-    # Base queryset (will be filtered to logged-in user's tags)
+    # Base queryset of all Tag instances (Contains all instances, will be scoped per-user)
     queryset = Tag.objects.all()
 
-    # Use token-based authentication i.e. Require token-based authentication for access
+    # Require token-based authentication
     authentication_classes = [TokenAuthentication]
 
-    # Only allow access if the user is authenticated
+    # Allow access only to authenticated users
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         """Return objects for the current authenticated user only"""
-        return self.queryset.filter(user=self.request.user).order_by("-name")
+
         # Filter tags by the requesting user and order them by name (descending)
+        return self.queryset.filter(user=self.request.user).order_by("-name")
+
+
+class IngredientViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+    """Manage ingredients in the database"""
+
+    # Use the IngredientSerializer to (de)serialize data
+    # Convert Ingredient objects <-> JSON (to JSON) i.e. Use IngredientSerializer for serialising Ingredient instances
+    serializer_class = serializers.IngredientSerializer
+
+    # Base queryset of all Ingredient instances (Contains all instances, will be scoped per-user)
+    queryset = Ingredient.objects.all()
+
+    # Require token-based authentication
+    authentication_classes = [TokenAuthentication]
+
+    # Allow access only to authenticated users
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        """Return objects for the current authenticated user only"""
+        # Filter the base queryset so users see only their own ingredients
+        return self.queryset.filter(user=self.request.user).order_by("-name")
