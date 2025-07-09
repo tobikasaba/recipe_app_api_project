@@ -37,11 +37,18 @@ class TagSerializer(serializers.ModelSerializer):
 
 
 class RecipeSerializer(serializers.ModelSerializer):
-    """Serializer for recipes"""
+    """
+        Serializer for recipes
 
-    # making TagSerializer a nested serializer for Recipe Serializer
-    # a list of tags will be assigned to a recipe
+    Methods whose names begin with a single underscore (for example, _get_or_create_tags) are treated as “private”,
+    by convention. They aren’t part of the class’s public API and aren’t intended to be used outside the class,
+    even though Python doesn’t enforce true access restrictions.
+    """
+
+    # making TagSerializer & IngredientSerializer a nesteds serializers for Recipe Serializer
+    # a list of tags and ingredients will be assigned to a recipe
     tags = TagSerializer(many=True, required=False)
+    ingredients = IngredientSerializer(many=True, required=False)
 
     class Meta:
         # Specify the model to serialize
@@ -50,17 +57,19 @@ class RecipeSerializer(serializers.ModelSerializer):
         # Lists the model fields to include in the serialized representation:
         # The auto generated primary key id, plus title, preparation time (time_minutes), price and any external link.
         fields = [
-            "id",  # Primary key (read-only)
-            "title",  # Recipe title
-            "time_minutes",  # Preparation time in minutes
-            "price",  # Decimal price (e.g. 12.50)
-            "link",  # Optional external URL
+            "id",
+            "title",
+            "time_minutes",
+            "price",
+            "link",
             "tags",  # Nested tags list
+            "ingredients",  # Nested ingredients list
         ]
+
         # Clients cannot set the ID
         read_only_fields = ["id"]
 
-    def get_or_create_tags(self, tags, recipe):
+    def _get_or_create_tags(self, tags, recipe):
         """Handle getting or creating tags as needed"""
         # Get the authenticated user from the request context
         auth_user = self.context["request"].user
@@ -70,21 +79,36 @@ class RecipeSerializer(serializers.ModelSerializer):
             # Fetch or create a Tag for this user and tag data
             tag_obj, created = Tag.objects.get_or_create(
                 user=auth_user,  # Ensure the tag is linked to the current user
-                **tag  # Unpacks the tag’s own fields, e.g. name="Thai"
+                **tag  # Unpacks the dict into keyword arguments, equivalent to writing name="Thai".
             )
             # Link each tag object to the provided recipe
             recipe.tags.add(tag_obj)
+
+    def _get_or_create_ingredients(self, ingredients, recipe):
+        """Handle getting or creating ingredients as needed"""
+        # Get the authenticated user from the request context
+        auth_user = self.context["request"].user
+
+        for ingredient in ingredients:
+            # Fetch or create an Ingredient for this user and tag data
+            ingredient_obj, created = Ingredient.objects.get_or_create(
+                user=auth_user,  # Ensure the ingredient is linked to the current user
+                **ingredient  # Unpacks the dict into keyword arguments, equivalent to writing name="Salt".
+            )
+            # Link each ingredient object to the provided recipe
+            recipe.ingredients.add(ingredient_obj)
 
     def create(self, validated_data):
         """Create a recipe"""
         # Extract 'tags' from the validated data so it doesn't get passed to Recipe.objects.create()
         tags = validated_data.pop("tags", [])
-
+        ingredients = validated_data.pop("ingredients", [])
         # Create a new Recipe instance with the remaining validated data
         recipe = Recipe.objects.create(**validated_data)
 
         # Handle the creation or association of tags
-        self.get_or_create_tags(tags, recipe)
+        self._get_or_create_tags(tags, recipe)
+        self._get_or_create_ingredients(ingredients, recipe)
 
         # Return the created recipe instance
         return recipe
@@ -92,13 +116,21 @@ class RecipeSerializer(serializers.ModelSerializer):
     def update(self, recipe_instance, validated_data):
         """Update recipe"""
 
-        # Extract and remove the 'tags' field from the validated data if present
+        # Extract and remove the 'tags' & 'ingredients' fields from the validated data if present
         tags = validated_data.pop("tags", None)
+        ingredients = validated_data.pop("ingredients", None)
 
         # If tags are included in the request, clear old tags and assign new ones
         if tags is not None:
             recipe_instance.tags.clear()  # Remove all current tags from the recipe
-            self.get_or_create_tags(tags, recipe_instance)  # Add new or existing tags
+            self._get_or_create_tags(tags, recipe_instance)  # Add new or existing tags
+
+        # If ingredients are included in the request, clear old ingredients and assign new ones
+        if ingredients is not None:
+            recipe_instance.ingredients.clear()  # Remove all current ingredients from the recipe
+            self._get_or_create_ingredients(
+                ingredients, recipe_instance
+            )  # Add new or existing ingredients
 
         # Set the remaining fields (e.g., title, time_minutes) on the instance
         for attr, value in validated_data.items():

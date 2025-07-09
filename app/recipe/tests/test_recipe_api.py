@@ -10,7 +10,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from core.models import Recipe, Tag
+from core.models import Recipe, Tag, Ingredient
 
 from recipe.serializers import RecipeSerializer, RecipeDetailSerializer
 
@@ -413,3 +413,78 @@ class PrivateRecipeApiTest(TestCase):
 
         # Confirm the recipe now has zero tags
         self.assertEqual(recipe.tags.count(), 0)
+
+    def test_create_recipe_with_new_ingredient(self):
+        """Test creating a recipe with new ingredients"""
+        # Payload includes title, time, price, and two new ingredients
+        payload = {
+            "title": "Cauliflower Tacos",
+            "time_minutes": 60,
+            "price": Decimal("4.30"),
+            "ingredients": [
+                {"name": "Cauliflower"},
+                {"name": "Salt"},
+            ],
+        }
+
+        # Send POST to create recipe + ingredients
+        res = self.client.post(RECIPES_URL, payload, format="json")
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+
+        # Verify exactly one recipe was created for this user
+        recipes = Recipe.objects.filter(user=self.user)
+        self.assertEqual(recipes.count(), 1)
+        recipe = recipes[0]
+
+        # It should have two ingredient relations
+        self.assertEqual(recipe.ingredients.count(), 2)
+
+        # Confirm each named ingredient exists and is linked to this recipe/user
+        for ingredient in payload["ingredients"]:
+            exists = recipe.ingredients.filter(
+                name=ingredient["name"], user=self.user
+            ).exists()
+            self.assertTrue(exists)
+
+    # Test creating a recipe while reusing existing ingredients
+    def test_create_recipe_with_existing_ingredients(self):
+        """Test creating a new recipe with existing ingredients."""
+
+        # Create an ingredient for the user that should be reused
+        ingredient = Ingredient.objects.create(user=self.user, name="Lemon")
+
+        # Define recipe data including one existing and one new ingredient
+        payload = {
+            "title": "Vietnamese Soup",
+            "time_minutes": 25,
+            "price": Decimal("2.55"),
+            "ingredients": [
+                {"name": "Lemon"},
+                {"name": "Fish Sauce"},
+            ],
+        }
+
+        # Send POST to create the recipe (and handle ingredients)
+        res = self.client.post(RECIPES_URL, payload, format="json")
+
+        # Expect HTTP 201 Created
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+
+        # Retrieve all recipes for this user and verify only one exists
+        recipes = Recipe.objects.filter(user=self.user)
+        self.assertEqual(recipes.count(), 1)
+        recipe = recipes[0]
+
+        # The recipe should now have two ingredients linked
+        self.assertEqual(recipe.ingredients.count(), 2)
+
+        # Ensure the pre-existing ingredient object was reused
+        self.assertIn(ingredient, recipe.ingredients.all())
+
+        # Confirm each ingredient from the payload exists on the recipe
+        for ingredient_data in payload["ingredients"]:
+            # Check existence by name and user
+            exists = recipe.ingredients.filter(
+                name=ingredient_data["name"], user=self.user
+            ).exists()
+            self.assertTrue(exists)

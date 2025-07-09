@@ -105,12 +105,17 @@ class PrivateIngredientsApiTests(TestCase):
 
     def test_delete_ingredient(self):
         """Testing deleting an ingredient"""
+        # Create an ingredient for the authenticated user
         ingredient = Ingredient.objects.create(user=self.user, name="Lettuce")
 
+        # Build the detail URL for deletion
         url = detail_url(ingredient.id)
+        # Send a DELETE request to remove the ingredient
         res = self.client.delete(url)
 
+        # Expect a 204 No Content response on successful deletion
         self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
 
+        # Confirm the ingredient has been removed from the database
         ingredients = Ingredient.objects.filter(user=self.user)
         self.assertFalse(ingredients.exists())
