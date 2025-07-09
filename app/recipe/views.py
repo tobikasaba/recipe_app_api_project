@@ -21,6 +21,26 @@ from core.models import Recipe, Tag, Ingredient
 from recipe import serializers
 
 
+class BaseRecipeAttrViewSet(
+    mixins.DestroyModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.ListModelMixin,
+    viewsets.GenericViewSet,
+):
+    """Base viewset for recipe attributes"""
+
+    # Require token-based authentication
+    authentication_classes = [TokenAuthentication]
+
+    # Allow access only to authenticated users
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        """Return objects for the current authenticated user only"""
+        # Filter the base queryset so users see only their own ingredients
+        return self.queryset.filter(user=self.request.user).order_by("-name")
+
+
 class RecipeViewSet(viewsets.ModelViewSet):
     """View for managing recipe APIs"""
 
@@ -56,13 +76,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
         serializer.save(user=self.request.user)
 
 
-class TagViewSet(
-    mixins.DestroyModelMixin,
-    mixins.UpdateModelMixin,
-    mixins.ListModelMixin,
-    viewsets.GenericViewSet,
-):
-    """Manage tags in the database"""
+class TagViewSet(BaseRecipeAttrViewSet):
+    """Manage tags in the database. Inherits from BaseRecipeAttrViewSet."""
 
     # Use the TagSerializer to (de)serialize data
     # Use this serializer to convert Tag objects <-> JSON (to JSON) i.e. Use TagSerializer for serialising Tag instances
@@ -71,26 +86,9 @@ class TagViewSet(
     # Base queryset of all Tag instances (Contains all instances, will be scoped per-user)
     queryset = Tag.objects.all()
 
-    # Require token-based authentication
-    authentication_classes = [TokenAuthentication]
 
-    # Allow access only to authenticated users
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        """Return objects for the current authenticated user only"""
-
-        # Filter tags by the requesting user and order them by name (descending)
-        return self.queryset.filter(user=self.request.user).order_by("-name")
-
-
-class IngredientViewSet(
-    mixins.DestroyModelMixin,
-    mixins.UpdateModelMixin,
-    mixins.ListModelMixin,
-    viewsets.GenericViewSet,
-):
-    """Manage ingredients in the database"""
+class IngredientViewSet(BaseRecipeAttrViewSet):
+    """Manage ingredients in the database. Inherits from BaseRecipeAttrViewSet."""
 
     # Use the IngredientSerializer to (de)serialize data
     # Convert Ingredient objects <-> JSON (to JSON) i.e. Use IngredientSerializer for serialising Ingredient instances
@@ -98,14 +96,3 @@ class IngredientViewSet(
 
     # Base queryset of all Ingredient instances (Contains all instances, will be scoped per-user)
     queryset = Ingredient.objects.all()
-
-    # Require token-based authentication
-    authentication_classes = [TokenAuthentication]
-
-    # Allow access only to authenticated users
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        """Return objects for the current authenticated user only"""
-        # Filter the base queryset so users see only their own ingredients
-        return self.queryset.filter(user=self.request.user).order_by("-name")
