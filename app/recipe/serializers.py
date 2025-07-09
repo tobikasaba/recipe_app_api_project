@@ -38,7 +38,7 @@ class TagSerializer(serializers.ModelSerializer):
 
 class RecipeSerializer(serializers.ModelSerializer):
     """
-        Serializer for recipes
+    Serializer for recipes
 
     Methods whose names begin with a single underscore (for example, _get_or_create_tags) are treated as “private”,
     by convention. They aren’t part of the class’s public API and aren’t intended to be used outside the class,

@@ -21,7 +21,9 @@ from core.models import Recipe, Tag, Ingredient
 from recipe import serializers
 
 
-class BaseRecipeAttrViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
+class RecipeViewSet(viewsets.ModelViewSet):
+    """View for managing recipe APIs"""
+
     # Use the RecipeDetailSerializer to (de)serialize data
     # Use this serializer to convert Recipe objects <-> JSON (to JSON)
     # i.e. Use RecipeDetailSerializer for serialising Recipe instances
