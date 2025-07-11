@@ -3,15 +3,15 @@
 
 
 services:
-#name of the service that will run the docker file
+  #name of the service that will run the docker file
   app:
-  # Specifies that the Docker image should be built using the current directory ('.').
-  # The root directory is the build context.
+    # Specifies that the Docker image should be built using the current directory ('.').
+    # The root directory is the build context.
     build:
       context: .
       # Pass build-time arguments to the Dockerfile
       args:
-         # Indicates that this build is for development purposes
+        # Indicates that this build is for development purposes
         - DEV=true
 
     # Port mappings: maps port 8000 on the local machine to port 8000 inside the Docker container.
@@ -25,6 +25,8 @@ services:
     # This also happens vice versa
     volumes:
       - ./app:/app
+      # Use the named volume 'dev-static-data' to persist and serve static/media files
+      - dev-static-data:/vol/web
 
     # Command to run the service when the container starts.
     # It first runs the wait_for_db command to check if the database is ready,
@@ -49,7 +51,7 @@ services:
       # If the 'db' service fails, the 'app' service will not start
       - db
 
-# Add a database service to the Docker Compose configuration
+  # Add a database service to the Docker Compose configuration
   db:
     # Use PostgreSQL version 13 with a lightweight Alpine Linux image
     image: postgres:13-alpine
@@ -70,3 +72,5 @@ services:
 volumes:
   # Define a named volume to persist database data
   dev-db-data:
+  # Declare a named volume to store and share static/media files across container restarts
+  dev-static-data:

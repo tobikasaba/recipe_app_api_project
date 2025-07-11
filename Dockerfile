@@ -50,12 +50,19 @@ RUN python -m venv /py && \
     # remove the packages installed earlier
     apk del .tmp-build-deps && \
     # Add a new user named 'django-user' without a password or a home directory.
-    # its best practice not to use the root user in the image, to run application.
+    # it's best practice not to use the root user in the image, to run application.
     # in case of security compromise, hackers can only use features available to the created user
     adduser \
       --disabled-password \
       --no-create-home \
-      django-user
+      django-user && \
+    # Create directories for user uploadable media and static files
+    mkdir -p /vol/web/media && \
+    mkdir -p /vol/web/static && \
+    # Give ownership (chown = change ownership) of /vol to django-user so they can write there
+    chown -R django-user:django-user /vol && \
+    # Set directory permissions to 755 (owner rwx, group rx, others rx)
+    chmod -R 755 /vol
 
 #Updates the environment variable inside the image
 #Activate the Virtual Environment by Default:
