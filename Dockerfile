@@ -30,11 +30,15 @@ ARG DEV=false
 RUN python -m venv /py && \
     # Upgrade pip inside the virtual environment.
     /py/bin/pip install --upgrade pip && \
-    # install PostgreSQL client package. Needed for pyscopg2 to connect to Postgres
-    apk add --update --no-cache postgresql-client && \
-    # sets the virtual dependencies package
+    # Installs the PostgreSQL command-line tools (psql, etc.) so the container can talk to a remote Postgres server at  \
+    # runtime. Needed for pyscopg2 to connect to Postgres
+    # and jpeg-dev headers so Pillow can compile in JPEG support.
+    apk add --update --no-cache postgresql-client  jpeg-dev && \
+    # sets the virtual dependencies package \
+    # Install temporary build dependencies (GCC toolchain, libpq-dev, musl-dev, zlib and zlib-dev)
+    # required to compile C extensions (psycopg2, Pillow). Removed after pip install to slim image.
     apk add --update --no-cache --virtual .tmp-build-deps \
-      build-base postgresql-dev musl-dev && \
+      build-base postgresql-dev musl-dev zlib zlib-dev && \
     # Install Python dependencies listed in the requirements.txt file.
     /py/bin/pip install -r /tmp/requirements.txt && \
     # Install dev dependencies if the DEV is set to true
