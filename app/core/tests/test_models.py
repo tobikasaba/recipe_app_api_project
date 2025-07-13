@@ -2,6 +2,8 @@
 Tests for models
 """
 
+from unittest.mock import patch
+
 from decimal import Decimal
 from django.test import TestCase
 
@@ -102,3 +104,29 @@ class ModelTests(TestCase):
 
         ingredient = models.Ingredient.objects.create(user=user, name="Ingredient1")
         self.assertEqual(str(ingredient), ingredient.name)
+
+    @patch("core.models.uuid.uuid4")
+    def test_recipe_file_name_uuid(self, mock_uuid):
+        """
+        Test generating a recipe image path
+
+        Temporarily replace core.models.uuid.uuid4 with a mock for this test
+
+        The mock intercepts the call to uuid.uuid4() at runtime inside the recipe_image_file_path function,
+        forcing it to return a specific result (in this test, "test-uuid").
+
+        By forcing uuid4() to yield a known value, we can verify that the filename
+        logic produces "uploads/recipe/test-uuid.jpg" instead of relying on a random UUID.
+        """
+
+        # Use a fixed UUID so the output is predictable
+        # Whenever the mock is called, give back the string 'test-uuid'
+        uuid = "test-uuid"
+        mock_uuid.return_value = uuid
+
+        # Generate the file path using our mocked UUID
+        # the recipe_image_file_path function calls uuid4().
+        file_path = models.recipe_image_file_path(None, "example.jpg")
+
+        # Verify it matches the expected uploads path
+        self.assertEqual(file_path, f"uploads/recipe/{uuid}.jpg")
