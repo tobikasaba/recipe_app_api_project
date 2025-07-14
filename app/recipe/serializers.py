@@ -151,10 +151,9 @@ class RecipeDetailSerializer(RecipeSerializer):
 
     class Meta(RecipeSerializer.Meta):
         # Inherit model & read_only_fields, then add description
-        fields = RecipeSerializer.Meta.fields + ["description"]
+        fields = RecipeSerializer.Meta.fields + ["description", "image"]
 
 
-# Serializer dedicated to uploading an image for a Recipe
 class RecipeImageSerializer(serializers.ModelSerializer):
     """
     Serializer for uploading images to recipe
