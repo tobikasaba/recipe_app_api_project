@@ -2,6 +2,10 @@
 Tests for recipe API
 """
 
+import tempfile
+import os
+
+from PIL import Image
 from decimal import Decimal
 from django.contrib.auth import get_user_model
 from django.test import TestCase
@@ -27,6 +31,13 @@ def detail_url(recipe_id):
 def create_user(**params):
     """Create and return a new user"""
     return get_user_model().objects.create_user(**params)
+
+
+# Define a helper to build the URL for uploading an image to a specific recipe
+def image_upload_url(recipe_id):
+    """Create and return an image upload URL"""
+    # Resolve the named URL pattern "recipe:recipe-upload-image" with the given recipe_id
+    return reverse("recipe:recipe-upload-image", args=[recipe_id])
 
 
 def create_recipe(user, **params):
@@ -488,3 +499,59 @@ class PrivateRecipeApiTest(TestCase):
                 name=ingredient_data["name"], user=self.user
             ).exists()
             self.assertTrue(exists)
+
+
+class ImageUploadTests(TestCase):
+    """Test for the image upload API"""
+
+    def setUp(self):
+        self.client = APIClient()  # DRF test client
+        # create and log in a test user
+        self.user = get_user_model().objects.create_user(
+            "user@example.com", "password123"
+        )
+        self.client.force_authenticate(self.user)
+        # create a sample recipe
+        self.recipe = create_recipe(user=self.user)
+
+    def tearDown(self):
+        """Runs after each test to delete the image file"""
+        self.recipe.image.delete()
+
+    def test_upload_image(self):
+        """Test uploading an image to recipe"""
+        # build the upload URL
+        url = image_upload_url(self.recipe.id)
+
+        # Create a temporary JPEG file and write a 10×10 RGB image into it
+        with tempfile.NamedTemporaryFile(suffix=".jpg") as image_file:
+            # Creates a new 10×10 RGB image in memory.
+            img = Image.new("RGB", (10, 10))
+            # Writes the image into the temp file in JPEG format.
+            img.save(image_file, format="JPEG")
+            # Resets the file pointer to the start so it can be read for upload.
+            image_file.seek(0)
+            # Prepares the multipart payload with our image file.
+            payload = {"image": image_file}
+            # Posts the file to the API as multipart form data. Best practice for uploading images in DRF
+            res = self.client.post(url, payload, format="multipart")
+
+        self.recipe.refresh_from_db()  # refresh to get the new image field
+        self.assertEqual(res.status_code, status.HTTP_200_OK)  # check response
+        self.assertIn("image", res.data)  # response should include image key
+        self.assertTrue(os.path.exists(self.recipe.image.path))  # file exists
+
+    def test_upload_image_bad_request(self):
+        """Test uploading an invalid image"""
+
+        # Build the upload URL for this recipe
+        url = image_upload_url(self.recipe.id)
+
+        # Prepare payload where 'image' is just a string, not a file
+        payload = {"image": "notanimage"}
+
+        # Send multipart POST with invalid image data
+        res = self.client.post(url, payload, format="multipart")
+
+        # Expect a 400 Bad Request response for invalid input
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)

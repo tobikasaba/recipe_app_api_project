@@ -10,7 +10,7 @@ from core.models import Recipe, Tag, Ingredient
 class IngredientSerializer(serializers.ModelSerializer):
     """Serializer for ingredients"""
 
-    # Configures the serializer’s behavior
+    # Configures the serializer’s behaviour
     class Meta:
         # Specify the Django model to serialize
         model = Ingredient
@@ -40,8 +40,8 @@ class RecipeSerializer(serializers.ModelSerializer):
     """
     Serializer for recipes
 
-    Methods whose names begin with a single underscore (for example, _get_or_create_tags) are treated as “private”,
-    by convention. They aren’t part of the class’s public API and aren’t intended to be used outside the class,
+    Convention treats methods whose names begin with a single underscore (example, _get_or_create_tags) as “private”.
+    They aren’t part of the class’s public API and aren’t intended to be used outside the class,
     even though Python doesn’t enforce true access restrictions.
     """
 
@@ -143,10 +143,33 @@ class RecipeSerializer(serializers.ModelSerializer):
         return recipe_instance
 
 
-# Extends RecipeSerializer to include the description field
 class RecipeDetailSerializer(RecipeSerializer):
-    """Serializer for recipe detail view"""
+    """
+    Serializer for recipe detail view
+    Extends RecipeSerializer to include the description field
+    """
 
     class Meta(RecipeSerializer.Meta):
         # Inherit model & read_only_fields, then add description
         fields = RecipeSerializer.Meta.fields + ["description"]
+
+
+# Serializer dedicated to uploading an image for a Recipe
+class RecipeImageSerializer(serializers.ModelSerializer):
+    """
+    Serializer for uploading images to recipe
+
+    A new API is created because it’s best practice to upload one type of data to an API:
+    - Recipe data via form fields
+    - Image data via file upload
+    """
+
+    class Meta:
+        # Specify the Django model this serializer works with
+        model = Recipe
+        # Only expose the recipe's id and its image field
+        fields = ["id", "image"]
+        # Prevent clients from providing or modifying the id
+        read_only_fields = ["id"]
+        # Require that an image file be included
+        extra_kwargs = {"image": {"required": True}}

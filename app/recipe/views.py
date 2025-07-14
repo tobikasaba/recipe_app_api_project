@@ -13,9 +13,11 @@ GenericViewSet is used when you want fine-grained control over which actions are
 allowing you to include only specific operations by combining it with the appropriate mixins.
 """
 
-from rest_framework import viewsets, mixins
+from rest_framework import viewsets, mixins, status
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import action
+from rest_framework.response import Response
 
 from core.models import Recipe, Tag, Ingredient
 from recipe import serializers
@@ -68,12 +70,47 @@ class RecipeViewSet(viewsets.ModelViewSet):
         """Return the serializer class fo requests"""
         if self.action == "list":
             return serializers.RecipeSerializer
+        elif self.action == "upload_image":
+            return serializers.RecipeImageSerializer
         return self.serializer_class
 
     def perform_create(self, serializer):
         """Create a new recipe"""
         # Save the new recipe, associating it with the currently authenticated user
         serializer.save(user=self.request.user)
+
+    # Add a custom POST endpoint at /recipes/{pk}/upload-image/
+    @action(
+        methods=["POST"],  # Only allow POST requests here
+        detail=True,  # This is for a single recipe, not the whole list
+        url_path="upload-image",  # The URL suffix to use after the recipe’s ID
+    )
+    def upload_image(self, request, pk=None):
+        """
+
+        In Django REST Framework, viewsets give you standard endpoints like
+        list (GET /recipes/) and detail (GET /recipes/123/).
+        The @action decorator lets you add your own extra endpoints to a viewset without writing a brand-new view.
+        Think of it as “pinning on” a custom button to each recipe (or to the whole list)
+        that does something special beyond the usual CRUD.
+
+        Upload an image to a specific recipe.
+        - `request` contains the uploaded file in request.data/files.
+        - `pk` is the recipe’s primary key from the URL (e.g., 123).
+        """
+        # Fetch the target recipe instance (or 404 if not found)
+        recipe = self.get_object()
+
+        # Bind the incoming file data to our image-only serializer
+        serializer = self.get_serializer(recipe, data=request.data)
+
+        # If the file is valid, save it and return the updated recipe data
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        # Otherwise return the validation errors with a 400 status
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class TagViewSet(BaseRecipeAttrViewSet):

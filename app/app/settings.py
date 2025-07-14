@@ -140,3 +140,8 @@ AUTH_USER_MODEL = "core.User"
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
+
+SPECTACULAR_SETTINGS = {
+    # Split request body schemas into separate components. Allows image upload ini the web interface
+    "COMPONENT_SPLIT_REQUEST": True,
+}
