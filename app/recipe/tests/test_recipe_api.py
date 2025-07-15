@@ -500,6 +500,58 @@ class PrivateRecipeApiTest(TestCase):
             ).exists()
             self.assertTrue(exists)
 
+    # Test filtering recipes by one or more tag IDs
+    def test_filter_by_tags(self):
+        """Test filtering recipes by tags"""
+        # Set up three recipes and two tags, then associate them
+        r1 = create_recipe(user=self.user, title="Thai Vegetable Curry")
+        r2 = create_recipe(user=self.user, title="Aubergine with Tahini")
+        tag1 = Tag.objects.create(user=self.user, name="Vegan")
+        tag2 = Tag.objects.create(user=self.user, name="Vegetarian")
+        r1.tags.add(tag1)
+        r2.tags.add(tag2)
+        r3 = create_recipe(user=self.user, title="Fish and Chips")
+
+        # Filter by tag1 and tag2 IDs
+        params = {"tags": f"{tag1.id},{tag2.id}"}
+        res = self.client.get(RECIPES_URL, params)
+
+        # Serialize each recipe for comparison
+        s1 = RecipeSerializer(r1)
+        s2 = RecipeSerializer(r2)
+        s3 = RecipeSerializer(r3)
+
+        # Only the tagged recipes should appear in the response
+        self.assertIn(s1.data, res.data)
+        self.assertIn(s2.data, res.data)
+        self.assertNotIn(s3.data, res.data)
+
+    # Test filtering recipes by one or more ingredient IDs
+    def test_filter_by_ingredients(self):
+        """Test filtering recipes by ingredients"""
+        # Set up three recipes and two ingredients, then associate ingredient 1 and 2 with recipe 1 and 2
+        r1 = create_recipe(user=self.user, title="Posh Beans on toast")
+        r2 = create_recipe(user=self.user, title="Chicken Cacciatore")
+        ingredient1 = Ingredient.objects.create(user=self.user, name="Feta Cheese")
+        ingredient2 = Ingredient.objects.create(user=self.user, name="Chicken")
+        r1.ingredients.add(ingredient1)
+        r2.ingredients.add(ingredient2)
+        r3 = create_recipe(user=self.user, title="Red Lentil Deal")
+
+        # Filter by ingredient1 and ingredient2 IDs
+        params = {"ingredients": f"{ingredient1.id},{ingredient2.id}"}
+        res = self.client.get(RECIPES_URL, params)
+
+        # Serialize each recipe for comparison
+        s1 = RecipeSerializer(r1)
+        s2 = RecipeSerializer(r2)
+        s3 = RecipeSerializer(r3)
+
+        # Only the recipes with the specified ingredients should appear
+        self.assertIn(s1.data, res.data)
+        self.assertIn(s2.data, res.data)
+        self.assertNotIn(s3.data, res.data)
+
 
 class ImageUploadTests(TestCase):
     """Test for the image upload API"""

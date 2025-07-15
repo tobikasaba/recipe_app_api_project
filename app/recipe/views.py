@@ -13,6 +13,12 @@ GenericViewSet is used when you want fine-grained control over which actions are
 allowing you to include only specific operations by combining it with the appropriate mixins.
 """
 
+from drf_spectacular.utils import (
+    extend_schema_view,
+    extend_schema,
+    OpenApiParameter,
+    OpenApiTypes,
+)
 from rest_framework import viewsets, mixins, status
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
@@ -43,6 +49,25 @@ class BaseRecipeAttrViewSet(
         return self.queryset.filter(user=self.request.user).order_by("-name")
 
 
+# Enhance the generated OpenAPI docs for the list endpoint
+# @extend_schema_view is a decorator from drf-spectacular that customises OpenAPI docs for specific viewset actions.
+@extend_schema_view(
+    # Applies this schema override to the list action (i.e. GET /recipes/).
+    list=extend_schema(
+        parameters=[
+            OpenApiParameter(
+                "tags",  # query param name
+                OpenApiTypes.STR,  # type = string
+                description="Comma separated list of tags IDs to filter",  # help text
+            ),
+            OpenApiParameter(
+                "ingredients",  # query param name
+                OpenApiTypes.STR,  # type = string
+                description="Comma separated list of ingredient IDs to filter",  # help text
+            ),
+        ]
+    )
+)
 class RecipeViewSet(viewsets.ModelViewSet):
     """View for managing recipe APIs"""
 
@@ -61,10 +86,44 @@ class RecipeViewSet(viewsets.ModelViewSet):
     # Allow access only to authenticated users
     permission_classes = [IsAuthenticated]
 
+    def _params_to_ints(self, qs):
+        """Covert a list of string IDs to a list of integers"""
+
+        # Take the incoming comma-separated string of IDs (qs),
+        # split it on each comma,
+        # convert each substring to an integer,
+        # and return the list of integers for filtering.
+        return [int(str_id) for str_id in qs.split(",")]
+
     # Overrides the default get_queryset() method.
+    # Override the base queryset to support optional filtering
     def get_queryset(self):
         """Retrieve recipes for the authenticated user only"""
-        return self.queryset.filter(user=self.request.user).order_by("-id")
+
+        # Read optional comma-separated filter params from the UR
+        # request.query_params is a dictionary-like object containing all the URL’s “query string” parameters
+        # everything after the '?' in the path.
+        # E.g. for tags, /api/recipes/?tags=1,2&search=curry => "1, 2"
+        # e.g. for search, /api/recipes/?tags=1,2&search=curry => "curry"
+        # the grabs the IDs of tags and ingredients intended to be filtered
+        tags = self.request.query_params.get("tags")
+        ingredients = self.request.query_params.get("ingredients")
+
+        # Start from all recipes defined on this viewset
+        queryset = self.queryset
+
+        # If tag IDs were provided, convert and filter by those tags
+        if tags:
+            tags_ids = self._params_to_ints(tags)
+            queryset = queryset.filter(tags__id__in=tags_ids)
+
+        # If ingredient IDs were provided, convert and filter by those ingredients
+        if ingredients:
+            ingredients_ids = self._params_to_ints(ingredients)
+            queryset = queryset.filter(ingredients__id__in=ingredients_ids)
+
+        # Finally, scope to this user, order by most-recent, and remove duplicates
+        return queryset.filter(user=self.request.user).order_by("-id").distinct()
 
     def get_serializer_class(self):
         """Return the serializer class fo requests"""
