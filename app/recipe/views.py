@@ -5,12 +5,29 @@ RecipeViewSet extends viewsets.ModelViewSet which provides a set of default acti
 list, create, retrieve, update, partial_update, and destroy.
 
 TagViewSet extends viewsets.GenericViewSet, which by itself does not provide any default actions.
-
 Instead, it gains its behaviour (list, update, destroy) through explicitly added mixins:
 ListModelMixin, UpdateModelMixin, and DestroyModelMixin.
 
 GenericViewSet is used when you want fine-grained control over which actions are available,
 allowing you to include only specific operations by combining it with the appropriate mixins.
+
+
+@extend_schema_view (or plain @extend_schema) is purely a documentation hook used to customise the OpenAPI docs.
+It doesn’t add or change any endpoints, it simply tells drf-spectacular how to describe existing actions
+(whether built-in ones like list, retrieve, etc., or your own @action methods).
+
+You can override any of the standard ViewSet "actions" (or your custom @action methods) by name. The built-in ones are:
+	•	list – GET /your-endpoint/
+	•	retrieve – GET /your-endpoint/{pk}/
+	•	create – POST /your-endpoint/
+	•	update – PUT /your-endpoint/{pk}/
+	•	partial_update – PATCH /your-endpoint/{pk}/
+	•	destroy – DELETE /your-endpoint/{pk}/
+
+@action is the DRF mechanism for actually adding new viewset endpoints. It creates a new URL
+either detail (as seen in the upload_image function where /recipes/{pk}/upload-image/)
+or collection level (detail = False, /recipes/upload-image excluding the primary key (pk) of each recipe),
+wiring up your method to a route and HTTP verb.
 """
 
 from drf_spectacular.utils import (
@@ -29,6 +46,21 @@ from core.models import Recipe, Tag, Ingredient
 from recipe import serializers
 
 
+# Enhance the generated OpenAPI docs for the list endpoint
+# @extend_schema_view is a decorator from drf-spectacular that customises OpenAPI docs for specific viewset actions.
+@extend_schema_view(
+    # Applies this schema override to the list action (i.e. GET /recipes/).
+    list=extend_schema(
+        parameters=[
+            OpenApiParameter(
+                "assigned_only",  # query param name
+                OpenApiTypes.INT,  # it’s an integer
+                enum=[0, 1],  # only 0 or 1 are valid
+                description="Filter by items assigned to recipes (0 = unassigned or 1 = assigned)",
+            )
+        ]
+    )
+)
 class BaseRecipeAttrViewSet(
     mixins.DestroyModelMixin,
     mixins.UpdateModelMixin,
@@ -44,9 +76,26 @@ class BaseRecipeAttrViewSet(
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        """Return objects for the current authenticated user only"""
-        # Filter the base queryset so users see only their own ingredients
-        return self.queryset.filter(user=self.request.user).order_by("-name")
+        """
+        Return objects for the current authenticated user only
+
+        Optionally filtering to those assigned to recipes
+        """
+
+        # Parse assigned_only param: "1" → True, else False
+        # If the URL had ?assigned_only=1, this returns the string "1", else "0"
+        # The string values 1 OR 0 are subsequently converted to int and then boolean values TRUE/FALSE
+        assigned_only = bool(int(self.request.query_params.get("assigned_only", 0)))
+
+        # Start from the base ingredient queryset
+        queryset = self.queryset
+
+        # Only include ingredients and tags linked to at least one recipe
+        if assigned_only:
+            queryset = queryset.filter(recipe__isnull=False)
+
+        # Scope the result to the authenticated user, order by name in descending, and remove any duplicates
+        return queryset.filter(user=self.request.user).order_by("-name").distinct()
 
 
 # Enhance the generated OpenAPI docs for the list endpoint
@@ -95,8 +144,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         # and return the list of integers for filtering.
         return [int(str_id) for str_id in qs.split(",")]
 
-    # Overrides the default get_queryset() method.
-    # Override the base queryset to support optional filtering
+    # Override the default get_queryset() to support optional filtering
     def get_queryset(self):
         """Retrieve recipes for the authenticated user only"""
 
@@ -126,7 +174,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return queryset.filter(user=self.request.user).order_by("-id").distinct()
 
     def get_serializer_class(self):
-        """Return the serializer class fo requests"""
+        """Return the serializer class for requests"""
         if self.action == "list":
             return serializers.RecipeSerializer
         elif self.action == "upload_image":

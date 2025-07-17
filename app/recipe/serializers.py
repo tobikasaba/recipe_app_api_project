@@ -100,7 +100,7 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         """Create a recipe"""
-        # Extract 'tags' from the validated data so it doesn't get passed to Recipe.objects.create()
+        # Extract 'tags' and 'ingredients' from the validated data so it doesn't get passed to Recipe.objects.create()
         tags = validated_data.pop("tags", [])
         ingredients = validated_data.pop("ingredients", [])
         # Create a new Recipe instance with the remaining validated data

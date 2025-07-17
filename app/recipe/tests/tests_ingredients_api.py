@@ -2,6 +2,8 @@
 Tests for the ingredients API
 """
 
+from decimal import Decimal
+
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.test import TestCase
@@ -9,7 +11,7 @@ from django.test import TestCase
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from core.models import Ingredient
+from core.models import Ingredient, Recipe
 
 from recipe.serializers import IngredientSerializer
 
@@ -119,3 +121,60 @@ class PrivateIngredientsApiTests(TestCase):
         # Confirm the ingredient has been removed from the database
         ingredients = Ingredient.objects.filter(user=self.user)
         self.assertFalse(ingredients.exists())
+
+    def test_filter_ingredients_assigned_to_recipes(self):
+        """Test listing ingredients by those assigned to recipes"""
+        # create the first ingredient
+        in1 = Ingredient.objects.create(user=self.user, name="Apples")
+        # create a second ingredient
+        in2 = Ingredient.objects.create(user=self.user, name="Turkey")
+
+        # create a recipe and link only the first ingredient to it
+        recipe = Recipe.objects.create(
+            title="Apple crumble",
+            time_minutes=5,
+            price=Decimal("4.50"),
+            user=self.user,
+        )
+        recipe.ingredients.add(in1)  # assign “Apples” to the recipe
+
+        # call the API with the assigned_only filter
+        res = self.client.get(INGREDIENTS_URL, {"assigned_only": 1})
+
+        # serialise each ingredient for comparison
+        s1 = IngredientSerializer(in1)
+        s2 = IngredientSerializer(in2)
+
+        # Confirm “Apples” is present
+        self.assertIn(s1.data, res.data)
+        # Confirm “Turkey” is absent
+        self.assertNotIn(s2.data, res.data)
+
+    # Test that the same ingredient appears only once when assigned to multiple recipes
+    def test_filtered_ingredients_unique(self):
+        """Test filtered ingredients returns a unique list"""
+        # Create one ingredient to be shared, and one unassigned
+        ing = Ingredient.objects.create(user=self.user, name="Eggs")
+        Ingredient.objects.create(user=self.user, name="Lentils")
+
+        # create two recipes, both using the “Eggs” ingredient
+        recipe1 = Recipe.objects.create(
+            title="Eggs benedict",
+            time_minutes=30,
+            price=Decimal("7.00"),
+            user=self.user,
+        )
+        recipe2 = Recipe.objects.create(
+            title="Herb Eggs",
+            time_minutes=20,
+            price=Decimal("4.00"),
+            user=self.user,
+        )
+        recipe1.ingredients.add(ing)
+        recipe2.ingredients.add(ing)
+
+        # call the API with the same assigned_only filter
+        res = self.client.get(INGREDIENTS_URL, {"assigned_only": 1})
+
+        # expect exactly one entry for “Eggs”, not two
+        self.assertEqual(len(res.data), 1)
