@@ -17,12 +17,12 @@ It doesn’t add or change any endpoints, it simply tells drf-spectacular how to
 (whether built-in ones like list, retrieve, etc., or your own @action methods).
 
 You can override any of the standard ViewSet "actions" (or your custom @action methods) by name. The built-in ones are:
-	•	list – GET /your-endpoint/
-	•	retrieve – GET /your-endpoint/{pk}/
-	•	create – POST /your-endpoint/
-	•	update – PUT /your-endpoint/{pk}/
-	•	partial_update – PATCH /your-endpoint/{pk}/
-	•	destroy – DELETE /your-endpoint/{pk}/
+••••••••list – GET /your-endpoint/
+••••••••retrieve – GET /your-endpoint/{pk}/
+••••••••create – POST /your-endpoint/
+••••••••update – PUT /your-endpoint/{pk}/
+••••••••partial_update – PATCH /your-endpoint/{pk}/
+••••••••destroy – DELETE /your-endpoint/{pk}/
 
 @action is the DRF mechanism for actually adding new viewset endpoints. It creates a new URL
 either detail (as seen in the upload_image function where /recipes/{pk}/upload-image/)
