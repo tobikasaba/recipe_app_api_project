@@ -10,6 +10,9 @@ COPY ./requirements.txt /tmp/requirements.txt
 # Copy the requirements.dev file into the Docker image at /tmp/requirements.dev.txt
 COPY ./requirements.dev.txt /tmp/requirements.dev.txt
 
+# Copy the helper scripts into the Docker image at /scripts
+COPY ./scripts /scripts
+
 # Copy the application code into the Docker image at /app
 COPY ./app /app
 
@@ -38,7 +41,7 @@ RUN python -m venv /py && \
     # Install temporary build dependencies (GCC toolchain, libpq-dev, musl-dev, zlib and zlib-dev)
     # required to compile C extensions (psycopg2, Pillow). Removed after pip install to slim image.
     apk add --update --no-cache --virtual .tmp-build-deps \
-      build-base postgresql-dev musl-dev zlib zlib-dev && \
+      build-base postgresql-dev musl-dev zlib zlib-dev linux-headers && \
     # Install Python dependencies listed in the requirements.txt file.
     /py/bin/pip install -r /tmp/requirements.txt && \
     # Install dev dependencies if the DEV is set to true
@@ -62,12 +65,18 @@ RUN python -m venv /py && \
     # Give ownership (chown = change ownership) of /vol to django-user so they can write there
     chown -R django-user:django-user /vol && \
     # Set directory permissions to 755 (owner rwx, group rx, others rx)
-    chmod -R 755 /vol
+    chmod -R 755 /vol && \
+    # Ensures scripts directory is executable
+    chmod -R +x /scripts
 
-#Updates the environment variable inside the image
-#Activate the Virtual Environment by Default:
-#To ensure the virtual environment is always active in the container, you can set the PATH environment variable:
-ENV PATH="/py/bin:$PATH"
+# Updates the environment variable inside the image
+# Activate the Virtual Environment by Default:
+# To ensure the virtual environment is always active in the container, you can set the PATH environment variable:
+# Ensure the virtualenv and scripts are first in PATH
+ENV PATH="/scripts:/py/bin:$PATH"
 
 #specifies that we are switching to the django-user profile and not the default root user
 USER django-user
+
+# Default startup script
+CMD ["run.sh"]
