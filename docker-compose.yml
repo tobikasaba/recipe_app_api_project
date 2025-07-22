@@ -1,5 +1,5 @@
 # version of docker compose syntax to be used
-version: "3.9"
+#version: "3.9"
 
 
 services:
@@ -44,6 +44,7 @@ services:
       - DB_NAME=devdb
       - DB_USER=devuser
       - DB_PASS=changeme
+      - DEBUG=1
 
     depends_on:
       # Specifies that the 'app' service depends on the 'db' service
