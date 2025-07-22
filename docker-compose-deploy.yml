@@ -1,0 +1,44 @@
+version: "3.9"
+
+services:
+  app:
+    build:
+      context: .                # Build from the root directory (contains Dockerfile)
+    restart: always             # Always restart on failure
+    volumes:
+      - static-data:/vol/web    # Mount shared volume for static & media files
+    environment:
+      - DB_HOST=db
+      - DB_NAME=${DB_NAME}               # From host .env
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+      - SECRET_KEY=${DJANGO_SECRET_KEY}   # Use ${VAR}, not $()
+      - ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS}
+    depends_on:
+      - db
+
+  db:
+    image: postgres:13-alpine     # Light Postgres image
+    restart: always
+    volumes:
+      - postgres-data:/var/lib/postgresql/data  # Persist data here
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASS}
+
+  proxy:
+    build:
+      context: ./proxy         # Build Nginx from the proxy/ folder
+    restart: always
+    depends_on:
+      - app
+    ports:
+      - "80:8000"               # Host port 80 → container port 8000
+    volumes:
+      - static-data:/vol/static  # Mount same static-data at /vol/static
+
+# Declare top-level named volumes (not under services)
+volumes:
+  postgres-data:  # Stores Postgres database files
+  static-data:    # Shares static & media files between app & proxy

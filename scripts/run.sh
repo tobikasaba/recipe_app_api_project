@@ -1,7 +1,7 @@
 #!/bin/zsh
 # Tells the system to run this script with zsh.
 
-# Exit immediately if any command fails. The script stops
+# Exit immediately if any command returns a non-zero status/command fails. The script stops
 set -e
 
 # Wait for the database service to become available
