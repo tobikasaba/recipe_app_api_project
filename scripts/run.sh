@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/bin/sh
 # Tells the system to run this script with zsh.
 
 # Exit immediately if any command returns a non-zero status/command fails. The script stops
@@ -19,4 +19,5 @@ python3 manage.py migrate
 # Enable a master process to manage workers
 # Allow each worker to use threads
 # Point to the Django  WSGI application in app/wsgi.py
-uwsgi --socket :9000 --workers 4 --master -- enable-threads --module app.wsgi
+uwsgi --socket :9000 --workers 4 --master --enable-threads --module app.wsgi
+
